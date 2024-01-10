@@ -36,7 +36,9 @@ trait AddsFieldsToQuery
     {
         $modelTableName = $this->getModel()->getTable();
 
-        $modelFields = $this->request->fields()->get($modelTableName);
+        $fields = $this->request->fields();
+
+        $modelFields = $fields->has($modelTableName) ? $fields->get($modelTableName) : $fields->get('_');
 
         if (empty($modelFields)) {
             return;
@@ -49,11 +51,13 @@ trait AddsFieldsToQuery
 
     public function getRequestedFieldsForRelatedTable(string $relation): array
     {
-        $table = Str::plural(Str::snake($relation)); // TODO: make this configurable
+        $tableOrRelation = config('query-builder.convert_relation_names_to_snake_case_plural', true)
+            ? Str::plural(Str::snake($relation))
+            : $relation;
 
-        $fields = $this->request->fields()->mapWithKeys(function ($fields, $table) {
-            return [$table => $fields];
-        })->get($table);
+        $fields = $this->request->fields()
+            ->mapWithKeys(fn ($fields, $table) => [$table => $fields])
+            ->get($tableOrRelation);
 
         if (! $fields) {
             return [];
@@ -70,11 +74,13 @@ trait AddsFieldsToQuery
 
     protected function ensureAllFieldsExist()
     {
+        $modelTable = $this->getModel()->getTable();
+
         $requestedFields = $this->request->fields()
-            ->map(function ($fields, $model) {
+            ->map(function ($fields, $model) use ($modelTable) {
                 $tableName = $model;
 
-                return $this->prependFieldsWithTableName($fields, $tableName);
+                return $this->prependFieldsWithTableName($fields, $model === '_' ? $modelTable : $tableName);
             })
             ->flatten()
             ->unique();

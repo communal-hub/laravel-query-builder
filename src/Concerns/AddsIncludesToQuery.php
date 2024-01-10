@@ -29,8 +29,12 @@ trait AddsIncludesToQuery
                     return collect([$include]);
                 }
 
-                if (Str::endsWith($include, config('query-builder.count_suffix'))) {
+                if (Str::endsWith($include, config('query-builder.count_suffix', 'Count'))) {
                     return AllowedInclude::count($include);
+                }
+
+                if (Str::endsWith($include, config('query-builder.exists_suffix', 'Exists'))) {
+                    return AllowedInclude::exists($include);
                 }
 
                 return AllowedInclude::relationship($include);
@@ -41,7 +45,9 @@ trait AddsIncludesToQuery
 
         $this->ensureAllIncludesExist();
 
-        $this->addIncludesToQuery($this->request->includes());
+        $includes = $this->filterNonExistingIncludes($this->request->includes());
+
+        $this->addIncludesToQuery($includes);
 
         return $this;
     }
@@ -65,6 +71,10 @@ trait AddsIncludesToQuery
 
     protected function ensureAllIncludesExist()
     {
+        if (config('query-builder.disable_invalid_includes_query_exception', false)) {
+            return;
+        }
+
         $includes = $this->request->includes();
 
         $allowedIncludeNames = $this->allowedIncludes->map(function (AllowedInclude $allowedInclude) {
@@ -78,5 +88,16 @@ trait AddsIncludesToQuery
         }
 
         // TODO: Check for non-existing relationships?
+    }
+
+    protected function filterNonExistingIncludes(Collection $includes): Collection
+    {
+        if (config('query-builder.disable_invalid_includes_query_exception', false) == false) {
+            return $includes;
+        }
+
+        return $includes->filter(function ($include) {
+            return $this->findInclude($include);
+        });
     }
 }
