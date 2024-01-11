@@ -12,12 +12,6 @@ trait SortsQuery
 
     public function allowedSorts($sorts): static
     {
-        if ($this->request->sorts()->isEmpty()) {
-            // We haven't got any requested sorts. No need to parse allowed sorts.
-
-            return $this;
-        }
-
         $sorts = is_array($sorts) ? $sorts : func_get_args();
 
         $this->allowedSorts = collect($sorts)->map(function ($sort) {
@@ -42,7 +36,9 @@ trait SortsQuery
      */
     public function defaultSort($sorts): static
     {
-        return $this->defaultSorts(func_get_args());
+        $sorts = is_array($sorts) ? $sorts : func_get_args();
+
+        return $this->defaultSorts($sorts);
     }
 
     /**
@@ -99,7 +95,7 @@ trait SortsQuery
 
     protected function ensureAllSortsExist(): void
     {
-        if (config('query-builder.disable_invalid_sort_query_exception')) {
+        if (config('query-builder.disable_invalid_sort_query_exception', false)) {
             return;
         }
 
