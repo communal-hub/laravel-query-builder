@@ -14,39 +14,27 @@ use Spatie\QueryBuilder\Filters\FiltersTrashed;
 
 class AllowedFilter
 {
-    /** @var Filter */
-    protected $filterClass;
+    protected string $internalName;
 
-    /** @var string */
-    protected $name;
+    protected Collection $ignored;
 
-    /** @var string */
-    protected $internalName;
+    protected mixed $default;
 
-    /** @var \Illuminate\Support\Collection */
-    protected $ignored;
+    protected bool $hasDefault = false;
 
-    /** @var mixed */
-    protected $default;
+    protected bool $nullable = false;
 
-    /** @var bool */
-    protected $hasDefault = false;
-
-    /** @var bool */
-    protected $nullable = false;
-
-    public function __construct(string $name, Filter $filterClass, ?string $internalName = null)
-    {
-        $this->name = $name;
-
-        $this->filterClass = $filterClass;
-
+    public function __construct(
+        protected string $name,
+        protected Filter $filterClass,
+        ?string $internalName = null
+    ) {
         $this->ignored = Collection::make();
 
         $this->internalName = $internalName ?? $name;
     }
 
-    public function filter(QueryBuilder $query, $value)
+    public function filter(QueryBuilder $query, $value): void
     {
         $valueToFilter = $this->resolveValueForFiltering($value);
 
