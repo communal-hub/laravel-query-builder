@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Spatie\QueryBuilder\Exceptions\InvalidSubject;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\QueryBuilderRequest;
 use Spatie\QueryBuilder\Sorts\Sort;
